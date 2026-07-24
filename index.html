@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🐉 Horoskopo-IA</title>
+    <style>
+        /* ========== RESET Y BASE ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000000;
+            color: #FFFFFF;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        /* ========== CONTENEDOR PRINCIPAL (SIMULACIÓN MÓVIL) ========== */
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 780px;
+            background: #000000;
+            border-radius: 30px;
+            border: 2px solid #FFD700;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.15);
+        }
+
+        /* ========== HEADER ========== */
+        .app-header {
+            background: #000000;
+            padding: 15px 20px 10px;
+            border-bottom: 1px solid #FFD700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .app-header h1 {
+            color: #FFD700;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .app-header .date-time {
+            color: #FFFFFF;
+            font-size: 12px;
+            opacity: 0.7;
+            text-align: right;
+        }
+
+        /* ========== CONTENIDO SCROLLABLE ========== */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 20px 10px;
+            scroll-behavior: smooth;
+        }
+
+        .content::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: #FFD700;
+            border-radius: 10px;
+        }
+
+        /* ========== TABS NAVEGACIÓN ========== */
+        .tab-navigation {
+            display: flex;
+            background: #000000;
+            border-top: 1px solid #FFD700;
+            flex-shrink: 0;
+            padding: 5px 0 8px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #FFFFFF;
+            font-size: 10px;
+            padding: 6px 0 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            opacity: 0.6;
+        }
+
+        .tab-btn .tab-icon {
+            font-size: 22px;
+        }
+
+        .tab-btn.active {
+            opacity: 1;
+            color: #FFD700;
+        }
+
+        .tab-btn.active .tab-icon {
+            color: #FFD700;
+        }
+
+        .tab-btn:hover {
+            opacity: 1;
+        }
+
+        /* ========== PANTALLAS ========== */
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========== TARJETAS ========== */
+        .card {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 18px 16px;
+            margin-bottom: 14px;
+            border: 1px solid #FFD700;
+        }
+
+        .card-title {
+            color: #FFD700;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .card-subtitle {
+            color: #FFFFFF;
+            font-size: 13px;
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        /* ========== HOME SCREEN ========== */
+        .zodiac-display {
+            text-align: center;
+            padding: 8px 0;
+        }
+
+        .zodiac-display .sign {
+            font-size: 36px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .zodiac-display .element {
+            font-size: 16px;
+            color: #4FC3F7;
+            margin-top: 2px;
+        }
+
+        .zodiac-display .trait {
+            font-size: 13px;
+            color: #FFFFFF;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+
+        .lucky-number {
+            font-size: 52px;
+            font-weight: bold;
+            color: #FFD700;
+            text-align: center;
+            padding: 5px 0;
+        }
+
+        .prediction-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .prediction-item {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 12px 8px;
+            text-align: center;
+            border: 2px solid #4FC3F7;
+        }
+
+        .prediction-item:nth-child(2) {
+            border-color: #66BB6A;
+        }
+
+        .prediction-item:nth-child(3) {
+            border-color: #FFA726;
+        }
+
+        .prediction-item .emoji {
+            font-size: 28px;
+        }
+
+        .prediction-item .text {
+            font-size: 11px;
+            color: #FFFFFF;
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+
+        /* ========== HORÓSCOPO SCREEN ========== */
+        .tab-selector {
+            display: flex;
+            border: 1px solid #FFD700;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .tab-selector button {
+            flex: 1;
+            background: #000000;
+            border: none;
+            color: #FFFFFF;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-selector button.active {
+            background: #FFD700;
+            color: #000000;
+        }
+
+        .tab-selector button:hover {
+            background: #FFD700;
+            color: #000000;
+        }
+
+        .auspicious-box {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            border: 2px solid #66BB6A;
+        }
+
+        .auspicious-box.bad {
+            border-color: #EF5350;
+        }
+
+        .auspicious-box .box-title {
+            font-weight: bold;
+            font-size: 15px;
+            color: #66BB6A;
+            margin-bottom: 6px;
+        }
+
+        .auspicious-box.bad .box-title {
+            color: #EF5350;
+        }
+
+        .auspicious-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .auspicious-box ul li {
+            color: #FFFFFF;
+            font-size: 13px;
+            padding: 3px 0;
+            padding-left: 18px;
+            position: relative;
+        }
+
+        .auspicious-box ul li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #66BB6A;
+        }
+
+        .auspicious-box.bad ul li::before {
+            color: #EF5350;
+        }
+
+        /* ========== NUMEROLOGÍA SCREEN ========== */
+        .numerology-input {
+            width: 100%;
+            background: #000000;
+            border: 1px solid #FFD700;
+            border-radius: 10px;
+            padding: 14px;
+            color: #FFFFFF;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 12px;
+            outline: none;
+        }
+
+        .numerology-input::placeholder {
+            color: #FFFFFF50;
+        }
+
+        .numerology-input:focus {
+            border-color: #4FC3F7;
+        }
+
+        .btn {
+            background: #FFD700;
+            color: #000000;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #FFC107;
+            transform: scale(0.98);
+        }
+
+        .result-number {
+            font-size: 64px;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .color-preview {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            margin: 10px auto;
+            border: 3px solid #FFFFFF;
+        }
+
+        .result-meaning {
+            color: #FFFFFF;
+            font-size: 14px;
+            text-align: center;
+            line-height: 1.6;
+            padding: 6px 0;
+        }
+
+        .info-box {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #4FC3F7;
+            margin-top: 10px;
+        }
+
+        .info-box h3 {
+            color: #4FC3F7;
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+
+        .info-box p {
+            color: #FFFFFF;
+            font-size: 13px;
+            line-height: 1.6;
+            opacity: 0.8;
+        }
+
+        /* ========== HERRAMIENTAS SCREEN ========== */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .tool-card {
+            background: #1a1a1a;
+            border-radius: 14px;
+            padding: 18px 12px;
+            text-align: center;
+            border: 1px solid #FFD700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-2px);
+            border-color: #4FC3F7;
+            box-shadow: 0 4px 20px rgba(79, 195, 247, 0.15);
+        }
+
+        .tool-card .icon {
+            font-size: 34px;
+        }
+
+        .tool-card .name {
+            color: #FFFFFF;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 6px;
+        }
+
+        .tool-card .desc {
+            color: #FFFFFF;
+            font-size: 11px;
+            opacity: 0.5;
+            margin-top: 2px;
+        }
+
+        .quote-box {
+            background: #1a1a1a;
+            border-radius: 14px;
+            padding: 18px 16px;
+            margin-top: 14px;
+            border: 1px solid #FFA726;
+            text-align: center;
+        }
+
+        .quote-box .quote {
+            color: #FFFFFF;
+            font-size: 15px;
+            font-style: italic;
+            line-height: 1.5;
+        }
+
+        .quote-box .author {
+            color: #FFA726;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 440px) {
+            .app-container {
+                height: 100vh;
+                border-radius: 0;
+                border: none;
+                max-width: 100%;
+            }
+
+            .app-header h1 {
+                font-size: 17px;
+            }
+
+            .prediction-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 6px;
+            }
+
+            .prediction-item .text {
+                font-size: 10px;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .app-container {
+                height: 100vh;
+                border-radius: 0;
+                border: none;
+            }
+
+            .card {
+                padding: 12px 14px;
+                margin-bottom: 10px;
+            }
+
+            .prediction-item {
+                padding: 8px 6px;
+            }
+        }
+
+        /* ========== UTILITY ========== */
+        .text-center {
+            text-align: center;
+        }
+        .mt-10 {
+            margin-top: 10px;
+        }
+        .mb-10 {
+            margin-bottom: 10px;
+        }
+        .gap-8 {
+            gap: 8px;
+        }
+        .flex {
+            display: flex;
+        }
+        .flex-col {
+            flex-direction: column;
+        }
+        .items-center {
+            align-items: center;
+        }
+        .w-full {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== APP ==================== -->
+    <div class="app-container" id="app">
+
+        <!-- HEADER -->
+        <div class="app-header">
+            <h1>🐉 Horoskopo-IA</h1>
+            <div class="date-time" id="headerDateTime">
+                <div id="headerDate">Cargando...</div>
+                <div id="headerTime">--:--</div>
+            </div>
+        </div>
+
+        <!-- CONTENIDO -->
+        <div class="content" id="contentArea">
+
+            <!-- ====== HOME ====== -->
+            <div class="screen active" id="screenHome">
+                <div class="card">
+                    <div class="card-title">📊 Resumen del Día</div>
+                    <div class="zodiac-display">
+                        <div class="sign" id="homeSign">🐉 Dragón</div>
+                        <div class="element" id="homeElement">Elemento: Fuego</div>
+                        <div class="trait" id="homeTrait">Poderoso, enérgico, carismático</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🍀 Número de la Suerte</div>
+                    <div class="lucky-number" id="homeLuckyNumber">8</div>
+                    <div style="text-align:center;color:#FFFFFF80;font-size:13px;" id="homeLuckyColor">Color: #FFD700</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🔮 Predicciones</div>
+                    <div class="prediction-grid">
+                        <div class="prediction-item">
+                            <div class="emoji">💕</div>
+                            <div class="text" id="homeLove">Amor en ascenso</div>
+                        </div>
+                        <div class="prediction-item">
+                            <div class="emoji">📈</div>
+                            <div class="text" id="homeWork">Oportunidades</div>
+                        </div>
+                        <div class="prediction-item">
+                            <div class="emoji">🧘</div>
+                            <div class="text" id="homeHealth">Energía renovada</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="border-color:#4FC3F7;">
+                    <div class="card-title" style="color:#4FC3F7;">⏰ Mejor Momento</div>
+                    <div style="color:#FFFFFF;font-size:14px;" id="homeBestTime">18:00 - 20:00</div>
+                    <div style="color:#FFFFFF80;font-size:12px;margin-top:4px;" id="homeTimeDesc">Ideal para conectar con tu pareja</div>
+                </div>
+            </div>
+
+            <!-- ====== HORÓSCOPO ====== -->
+            <div class="screen" id="screenHoroscope">
+                <div class="tab-selector">
+                    <button class="active" data-tab="chino" onclick="switchHoroscopeTab('chino')">🐉 Chino</button>
+                    <button data-tab="tradicional" onclick="switchHoroscopeTab('tradicional')">📜 Tradicional</button>
+                </div>
+
+                <!-- Sub-pestaña Chino -->
+                <div id="horoscopeChino">
+                    <div class="card">
+                        <div class="card-title">🐉 Tu Signo</div>
+                        <div style="font-size:32px;font-weight:bold;color:#FFD700;text-align:center;" id="horoSign">Dragón</div>
+                        <div style="color:#4FC3F7;text-align:center;font-size:16px;" id="horoElement">Elemento: Fuego</div>
+                        <div style="color:#FFFFFF80;text-align:center;font-size:13px;margin-top:4px;" id="horoTrait">Poderoso, enérgico, carismático</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">🔮 Compatibilidad</div>
+                        <div style="color:#66BB6A;font-size:15px;" id="horoBest">✅ Mejor: Rata</div>
+                        <div style="color:#EF5350;font-size:15px;" id="horoWorst">❌ Peor: Cerdo</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">📊 Rasgos</div>
+                        <div style="color:#FFFFFF;font-size:14px;line-height:1.6;" id="horoTraits">
+                            • Poderoso y enérgico<br>
+                            • Carismático y magnético<br>
+                            • Ambicioso y decidido
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-pestaña Tradicional -->
+                <div id="horoscopeTradicional" style="display:none;">
+                    <div class="card">
+                        <div class="card-title">📅 Almanaque Tung Shing</div>
+                        <div style="color:#FFFFFF;font-size:14px;text-align:center;" id="horoDate">Viernes, 24 de julio de 2026</div>
+                        <div style="color:#FFFFFF80;font-size:13px;text-align:center;margin-top:4px;" id="horoLunar">Año del Caballo</div>
+                    </div>
+
+                    <div class="auspicious-box">
+                        <div class="box-title">✅ Auspicioso</div>
+                        <ul id="horoGoodList">
+                            <li>Casamiento</li>
+                            <li>Iniciar negocios</li>
+                            <li>Comprar propiedades</li>
+                        </ul>
+                    </div>
+
+                    <div class="auspicious-box bad">
+                        <div class="box-title">❌ Inauspicioso</div>
+                        <ul id="horoBadList">
+                            <li>Entierros</li>
+                            <li>Cirugías</li>
+                            <li>Iniciar pleitos</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== NUMEROLOGÍA ====== -->
+            <div class="screen" id="screenNumerology">
+                <div class="card">
+                    <div class="card-title">🔢 Numerología Personal</div>
+                    <div class="card-subtitle">Ingresa tu fecha de nacimiento (DDMMYYYY)</div>
+                    <input type="text" class="numerology-input" id="numerologyInput" placeholder="Ej: 15061990" maxlength="8" inputmode="numeric">
+                    <button class="btn" onclick="calculateNumerology()">Calcular</button>
+                </div>
+
+                <div id="numerologyResult" style="display:none;">
+                    <div class="card" style="border-width:3px;" id="resultCard">
+                        <div class="card-title">Número del Camino de la Vida</div>
+                        <div class="result-number" id="resultNumber">7</div>
+                        <div class="color-preview" id="resultColorPreview" style="background:#F39C12;"></div>
+                        <div class="result-meaning" id="resultMeaning">Analítico, espiritual, intuitivo. Buscas la verdad y el conocimiento profundo.</div>
+                        <div style="color:#FFD700;text-align:center;font-size:13px;" id="resultColorText">Color vibracional: #F39C12</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h3>📖 ¿Qué es la Numerología?</h3>
+                    <p>La numerología es el estudio de la relación mística entre los números y los eventos de la vida. Cada número tiene una vibración energética única que influye en nuestra personalidad y destino.</p>
+  
